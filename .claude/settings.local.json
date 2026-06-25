@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(npm install *)",
+      "Bash(node \"C:/Users/ANDSHO~1/AppData/Local/Temp/claude/c--Users-andsholinka-Documents-dont-open-learn-noteplus/82e003be-9f59-480c-b0c7-800639c712ca/scratchpad/gen-icons.mjs\" \"./public\")",
+      "Bash(npm run *)"
+    ]
+  }
+}
