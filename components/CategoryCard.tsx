@@ -143,7 +143,7 @@ export function CategoryCard({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-white/90">{e.label}</p>
                     <p className="text-[11px] text-muted">
-                      {formatDate(e.createdAt)} · ketuk untuk ubah
+                      {formatDate(e.createdAt)}
                     </p>
                   </div>
                   <p className="tnum text-sm font-semibold text-red-400">

@@ -31,9 +31,17 @@ export const spent = (c: Category) =>
 
 export const remaining = (c: Category) => c.allocated - spent(c);
 
+/**
+ * Terpakai efektif untuk perhitungan total. Pos yang dicentang dianggap
+ * lunas/terpakai penuh (minimal sebesar alokasinya), walau belum ada
+ * rincian pengeluaran. Pos belum dicentang hanya dihitung dari pengeluaran.
+ */
+export const usedOf = (c: Category) =>
+  c.done ? Math.max(c.allocated, spent(c)) : spent(c);
+
 export const sheetTotals = (s: Sheet) => {
   const allocated = s.categories.reduce((sum, c) => sum + c.allocated, 0);
-  const used = s.categories.reduce((sum, c) => sum + spent(c), 0);
+  const used = s.categories.reduce((sum, c) => sum + usedOf(c), 0);
   const doneCount = s.categories.filter((c) => c.done).length;
   return {
     allocated,
