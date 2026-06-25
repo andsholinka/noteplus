@@ -9,6 +9,18 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppState, Category, Expense, Sheet } from './types';
+import { remaining } from './types';
+
+/**
+ * Pos yang punya pengeluaran otomatis dicentang saat sisa habis (≤ 0),
+ * dan lepas centang kalau sisa kembali positif. Pos tanpa pengeluaran
+ * (cukup dicentang manual) tidak diutak-atik.
+ */
+function withAutoDone(c: Category): Category {
+  if (c.expenses.length === 0) return c;
+  const done = c.allocated > 0 && remaining(c) <= 0;
+  return c.done === done ? c : { ...c, done };
+}
 
 const STORAGE_KEY = 'noteplus.v1';
 
@@ -67,8 +79,17 @@ type Store = {
   ) => void;
   deleteCategory: (id: string) => void;
   toggleDone: (id: string) => void;
+  moveCategory: (id: string, dir: -1 | 1) => void;
 
-  addExpense: (catId: string, data: { label: string; amount: number }) => void;
+  addExpense: (
+    catId: string,
+    data: { label: string; amount: number; createdAt?: number }
+  ) => void;
+  updateExpense: (
+    catId: string,
+    expId: string,
+    data: { label: string; amount: number; createdAt: number }
+  ) => void;
   deleteExpense: (catId: string, expId: string) => void;
 
   importState: (state: AppState) => void;
@@ -187,24 +208,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toggleDone: (id) =>
       mutateCategory(id, (c) => ({ ...c, done: !c.done })),
 
-    addExpense: (catId, { label, amount }) => {
+    moveCategory: (id, dir) =>
+      mutateSheet((s) => {
+        const i = s.categories.findIndex((c) => c.id === id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= s.categories.length) return s;
+        const next = [...s.categories];
+        [next[i], next[j]] = [next[j], next[i]];
+        return { ...s, categories: next };
+      }),
+
+    addExpense: (catId, { label, amount, createdAt }) => {
       const exp: Expense = {
         id: uid(),
         label: label || 'Pengeluaran',
         amount,
-        createdAt: Date.now(),
+        createdAt: createdAt ?? Date.now(),
       };
-      mutateCategory(catId, (c) => ({
-        ...c,
-        expenses: [...c.expenses, exp],
-      }));
+      mutateCategory(catId, (c) =>
+        withAutoDone({ ...c, expenses: [...c.expenses, exp] })
+      );
     },
 
+    updateExpense: (catId, expId, data) =>
+      mutateCategory(catId, (c) =>
+        withAutoDone({
+          ...c,
+          expenses: c.expenses.map((e) =>
+            e.id === expId
+              ? {
+                  ...e,
+                  label: data.label || 'Pengeluaran',
+                  amount: data.amount,
+                  createdAt: data.createdAt,
+                }
+              : e
+          ),
+        })
+      ),
+
     deleteExpense: (catId, expId) =>
-      mutateCategory(catId, (c) => ({
-        ...c,
-        expenses: c.expenses.filter((e) => e.id !== expId),
-      })),
+      mutateCategory(catId, (c) =>
+        withAutoDone({
+          ...c,
+          expenses: c.expenses.filter((e) => e.id !== expId),
+        })
+      ),
 
     importState: (next) => {
       setState(next);

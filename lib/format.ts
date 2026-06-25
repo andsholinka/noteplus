@@ -48,3 +48,27 @@ export function formatDate(ts: number): string {
     month: 'short',
   });
 }
+
+export function formatDateLong(ts: number): string {
+  return new Date(ts).toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+/** Timestamp -> "yyyy-mm-dd" untuk <input type="date"> (waktu lokal). */
+export function toDateInput(ts: number): string {
+  const d = new Date(ts);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** "yyyy-mm-dd" -> timestamp, mempertahankan jam dari nilai lama bila ada. */
+export function fromDateInput(value: string, keepTimeFrom?: number): number {
+  const [y, m, d] = value.split('-').map(Number);
+  const base = keepTimeFrom ? new Date(keepTimeFrom) : new Date();
+  base.setFullYear(y, (m || 1) - 1, d || 1);
+  return base.getTime();
+}
